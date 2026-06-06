@@ -32,7 +32,7 @@ A lightweight PHP/MySQL visitor registration and reporting app.
 
 ## Local Setup
 
-1. Place the project in your web root, for example:
+1. Place the project in your web server.
 
 2. Import the database:
 
