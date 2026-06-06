@@ -2,6 +2,7 @@
 session_start();
 include_once '../../config/config.php';
 include_once '../../controllers/CookieSet.php';
+include_once '../../controllers/FormFieldController.php';
 
 $uuid = generateUUID();
 
@@ -30,55 +31,9 @@ $uuid = generateUUID();
                 <h1 class="title has-text-centered">Pendaftaran Pelawat</h1>
                 
                 <form action="process-check-in-kiosk.php" method="POST">
-                    <!-- Nama -->
                     <input type="hidden" name="visitorId" value="<?php echo htmlspecialchars($uuid); ?>" />
 
-                    <div class="field">
-                        <label class="label has-text-white">Nama</label>
-                        <div class="control has-icons-left">
-                            <input class="input is-rounded" type="text" name="nama" placeholder="Masukkan nama" required>
-                            <span class="icon is-small is-left">
-                                <span class="iconify" data-icon="mdi:user" style="color: #ffffff;"></span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Tujuan -->
-                    <div class="field">
-                        <label class="label has-text-white">Tujuan</label>
-                        <div class="control">
-                            <ul class="radio-list">
-                                <li>
-                                    <label class="radio">
-                                        <input type="radio" name="tujuan" value="Pengguna" required>
-                                        <img src="../../assets/images/read.png" alt="icon" class="radio-icon">
-                                        <span class="radio-label">Pengguna</span>
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="radio">
-                                        <input type="radio" name="tujuan" value="Lawatan" required>
-                                        <img src="../../assets/images/tourists.png" alt="icon" class="radio-icon">
-                                        <span class="radio-label">Lawatan</span>
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="radio">
-                                        <input type="radio" name="tujuan" value="Kontraktor" required>
-                                        <img src="../../assets/images/builder.png" alt="icon" class="radio-icon">
-                                        <span class="radio-label">Kontraktor</span>
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="radio">
-                                        <input type="radio" name="tujuan" value="Urusan Rasmi" required>
-                                        <img src="../../assets/images/businessman.png" alt="icon" class="radio-icon">
-                                        <span class="radio-label">Urusan Rasmi</span>
-                                    </label>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                    <?php renderVisitorFields(); ?>
                     
                     <div class="field">
                         <label class="label has-text-white">Lokasi Dituju</label>
@@ -100,23 +55,6 @@ $uuid = generateUUID();
 
                     
                     
-                <div class="field-group">
-                    <div class="field adult">
-                        <label class="label has-text-white">Dewasa</label>
-                        <div class="control has-icons-left">
-                            <input class="input is-rounded" type="number" name="adult" min="0" max="999" value="1" required>
-                        </div>
-                    </div>   
-                
-                    <div class="field child">
-                        <label class="label has-text-white">Kanak-Kanak</label>
-                        <div class="control has-icons-left">
-                            <input class="input is-rounded" type="number" name="children" min="0" max="999" value="0" required>
-                        </div>
-                    </div>   
-                </div>
-                    
-
                     <!-- Submit Button -->
                     <div class="field">
                         <div class="control">

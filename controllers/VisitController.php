@@ -67,7 +67,7 @@ function getVisitorIdByUserId($user_id) {
     return null;  // Return null if no matching user found
 }
 
-function checkInVisitor($visitor_id, $name, $location_id, $purpose, $adult, $children) {
+function checkInVisitor($visitor_id, $name, $location_id, $faculty, $semester, $custom_fields = []) {
     global $pdo;
     
     // Check if the visitor has already checked in today at the same location
@@ -83,14 +83,19 @@ function checkInVisitor($visitor_id, $name, $location_id, $purpose, $adult, $chi
         $stmtCheckUser = $pdo->prepare("SELECT user_id FROM users WHERE visitor_id = :visitor_id LIMIT 1");
         $stmtCheckUser->execute(['visitor_id' => $visitor_id]);
 
+        $customJson = json_encode($custom_fields, JSON_UNESCAPED_UNICODE);
+
         // Check if the user exists
         if ($stmtCheckUser->rowCount() === 0) {
             // Insert into users table if visitor_id does not exist
-            $stmt1 = $pdo->prepare("INSERT INTO users (visitor_id, name, card_token, created_at)  
-                                    VALUES (:visitor_id, :name, :card_token, :created_at)");
+            $stmt1 = $pdo->prepare("INSERT INTO users (visitor_id, name, faculty, semester, custom_fields, card_token, created_at)  
+                                    VALUES (:visitor_id, :name, :faculty, :semester, :custom_fields, :card_token, :created_at)");
             $stmt1->execute([
                 'visitor_id' => $visitor_id,
                 'name' => $name,
+                'faculty' => $faculty,
+                'semester' => $semester,
+                'custom_fields' => $customJson,
                 'card_token' => generateCardToken(),
                 'created_at' => (new DateTime('now', new DateTimeZone('Asia/Kuala_Lumpur')))->format('Y-m-d H:i:s'),
             ]);
@@ -101,6 +106,15 @@ function checkInVisitor($visitor_id, $name, $location_id, $purpose, $adult, $chi
             // Get the existing user_id if visitor_id already exists
             $user = $stmtCheckUser->fetch(PDO::FETCH_ASSOC);
             $user_id = $user['user_id'];
+
+            $stmtUpdateUser = $pdo->prepare("UPDATE users SET name = :name, faculty = :faculty, semester = :semester, custom_fields = :custom_fields WHERE user_id = :user_id");
+            $stmtUpdateUser->execute([
+                'name' => $name,
+                'faculty' => $faculty,
+                'semester' => $semester,
+                'custom_fields' => $customJson,
+                'user_id' => $user_id,
+            ]);
         }
 
         // Fetch the location name from the locations table using location_id
@@ -116,18 +130,18 @@ function checkInVisitor($visitor_id, $name, $location_id, $purpose, $adult, $chi
         }
 
         // Insert into visits table
-        $stmt2 = $pdo->prepare("INSERT INTO visits (visitor_id, user_id, check_in, location_id, purpose, status, location_name, adult, child)  
-                                VALUES (:visitor_id, :user_id, :check_in, :location_id, :purpose, :status, :location_name, :adult, :child)");
+        $stmt2 = $pdo->prepare("INSERT INTO visits (visitor_id, user_id, check_in, location_id, faculty, semester, custom_fields, status, location_name, visit_count)  
+                                VALUES (:visitor_id, :user_id, :check_in, :location_id, :faculty, :semester, :custom_fields, :status, :location_name, 1)");
         $stmt2->execute([
             'visitor_id' => $visitor_id,
             'user_id' => $user_id,
             'check_in' => (new DateTime('now', new DateTimeZone('Asia/Kuala_Lumpur')))->format('Y-m-d H:i:s'), // GMT+8
             'location_id' => $location_id,
-            'purpose' => $purpose,
+            'faculty' => $faculty,
+            'semester' => $semester,
+            'custom_fields' => $customJson,
             'status' => 'checked-in',
             'location_name' => $location_name,
-            'adult' => $adult,
-            'child' => $children,
             
         ]);
 
@@ -182,8 +196,8 @@ function updateNewLocation($visitor_id, $location_id) {
 
         // Prepare the new insert query with updated location details
         $stmtInsert = $pdo->prepare("
-            INSERT INTO visits (visitor_id, user_id, check_in, location_id, purpose, status, location_name, adult, child) 
-            VALUES (:visitor_id, :user_id, :check_in, :location_id, :purpose, :status, :location_name, :adult, :child)
+            INSERT INTO visits (visitor_id, user_id, check_in, location_id, faculty, semester, custom_fields, status, location_name, visit_count) 
+            VALUES (:visitor_id, :user_id, :check_in, :location_id, :faculty, :semester, :custom_fields, :status, :location_name, 1)
         ");
 
         // Execute the insert with the copied data, updating only location_id and location_name
@@ -192,11 +206,11 @@ function updateNewLocation($visitor_id, $location_id) {
             'user_id' => $latestVisit['user_id'],
             'check_in' => (new DateTime('now', new DateTimeZone('Asia/Kuala_Lumpur')))->format('Y-m-d H:i:s'), // GMT+8
             'location_id' => $location_id,
-            'purpose' => $latestVisit['purpose'],
+            'faculty' => $latestVisit['faculty'],
+            'semester' => $latestVisit['semester'],
+            'custom_fields' => $latestVisit['custom_fields'],
             'status' => 'checked-in',
             'location_name' => $location_name,
-            'adult' => $latestVisit['adult'],
-            'child' => $latestVisit['child'],
         ]);
 
         // Commit the transaction
@@ -242,7 +256,7 @@ function registerNewDay($visitor_id, $location_id) {
         }
 
         // Prepare the new insert query with updated location details
-        $stmtInsert = $pdo->prepare("INSERT INTO visits (visitor_id, user_id, check_in, location_id, purpose, status, location_name, adult, child) VALUES (:visitor_id, :user_id, :check_in, :location_id, :purpose, :status, :location_name, :adult, :child)");
+        $stmtInsert = $pdo->prepare("INSERT INTO visits (visitor_id, user_id, check_in, location_id, faculty, semester, custom_fields, status, location_name, visit_count) VALUES (:visitor_id, :user_id, :check_in, :location_id, :faculty, :semester, :custom_fields, :status, :location_name, 1)");
 
         // Execute the insert with the copied data, updating only location_id and location_name
         $stmtInsert->execute([
@@ -250,11 +264,11 @@ function registerNewDay($visitor_id, $location_id) {
             'user_id' => $latestVisit['user_id'],
             'check_in' => (new DateTime('now', new DateTimeZone('Asia/Kuala_Lumpur')))->format('Y-m-d H:i:s'), // GMT+8
             'location_id' => $location_id,
-            'purpose' => $latestVisit['purpose'],
+            'faculty' => $latestVisit['faculty'],
+            'semester' => $latestVisit['semester'],
+            'custom_fields' => $latestVisit['custom_fields'],
             'status' => 'checked-in',
             'location_name' => $location_name,
-            'adult' => 1,
-            'child' => 0,
         ]);
 
         // Commit the transaction

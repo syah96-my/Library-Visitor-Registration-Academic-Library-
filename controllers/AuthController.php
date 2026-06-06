@@ -1,9 +1,6 @@
 <?php
 // AuthController.php
 
-//include_once '../config/config.php';
-
-//include_once '../sessions/session.php';
 // Login function
 function login($username, $password) {
     
@@ -16,9 +13,12 @@ function login($username, $password) {
     if ($user && password_verify($password, $user['password'])) {
         setSession($user['account_id']);
         header('Location: ' . $base_url . '/views/admin/main.php');
+        exit;
     } else {
-        echo "Invalid credentials!";
+        return false;
     }
+
+    return true;
 }
 
 

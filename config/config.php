@@ -27,7 +27,7 @@ function getBaseUrl() {
 $base_url = getBaseUrl();
 
 $host = 'localhost';
-$dbname = 'visitor';
+$dbname = 'visitor_detail';
 $username = 'root';
 $password = '';
 

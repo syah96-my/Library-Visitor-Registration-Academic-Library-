@@ -3,10 +3,15 @@
 
 // Start the session
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
-//include_once '../config/config.php'; // Database connection
-
 // Check if the user is logged in
 function isLoggedIn() {
     return isset($_SESSION['user_id']);

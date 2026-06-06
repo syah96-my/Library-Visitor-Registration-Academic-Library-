@@ -52,82 +52,12 @@ if (isset($_COOKIE['visitor_id']) && !empty($_COOKIE['visitor_id'])) {
                     }
 
             } else {
-         echo '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SweetAlert2 Demo</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        .swal2-popup {
-            max-width: 90% !important;
-            width: auto !important;
-            font-size: 1rem !important;
-        }
-        .swal2-confirm, .swal2-deny {
-            padding: 0.8rem 1.5rem !important;
-            font-size: 1rem !important;
-        }
-        @media (max-width: 480px) {
-            .swal2-popup {
-                font-size: 0.9rem !important;
-            }
-            .swal2-confirm, .swal2-deny {
-                padding: 0.6rem 1.2rem !important;
-                font-size: 0.9rem !important;
-            }
-        }
-        @media (max-width: 360px) {
-            .swal2-popup {
-                font-size: 0.8rem !important;
-            }
-            .swal2-confirm, .swal2-deny {
-                padding: 0.5rem 1rem !important;
-                font-size: 0.8rem !important;
-            }
-        }
-    </style>
-</head>
-<body>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        Swal.fire({
-            title: "Adakah anda hadir seorang diri?",
-            icon: "question",
-            showDenyButton: true,
-            confirmButtonText: "Ya",
-            denyButtonText: "Tidak",
-            allowOutsideClick: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch("register_new_day.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        visitor_id: "' . $visitor_id . '",
-                        location_id: "' . $location_id . '"
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = "visitor-card.php";
-                    } else {
-                        Swal.fire("Error", data.message || "Failed to update location.", "error");
-                    }
-                });
-            } else if (result.isDenied) {
-                window.location.href = "check-in-update.php";
-            }
-        });
-    });
-</script>
-</body>
-</html>';
-
+                if (registerNewDay($visitor_id, $location_id)) {
+                    header("Location: visitor-card.php");
+                    exit;
+                } else {
+                    echo "Failed to register visit.";
+                }
             }
         }
 

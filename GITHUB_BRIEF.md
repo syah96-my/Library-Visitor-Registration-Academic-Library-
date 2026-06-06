@@ -1,50 +1,25 @@
-# Visitor Tracking Web App
+# Visitor Detail Registration
 
-A lightweight PHP/MySQL visitor registration and movement tracking app. Visitors register once, receive a reusable digital card, and can scan location QR links as they move between locations.
+PHP/MySQL visitor registration app with configurable visitor fields and admin reporting.
 
-## Main Flow
+## Flow
 
-- First-time visitor scans a location QR and completes the registration form.
-- The app stores the visitor profile and today's first visit.
-- If the same visitor scans another location on the same day, the app records the new location and shows the updated digital card.
-- If the visitor returns on another day, the app asks whether they came alone.
-- If they came alone, the app records a new visit for that day automatically.
-- If they came with others, the app opens a short form to capture adult and child counts.
+- First-time visitor registers at the kiosk or by scanning a location QR.
+- The app stores visitor profile data and records one visit.
+- Same device scanning another location records movement as another visit.
+- Admin can manage locations, form fields, users, and reports.
+- Reports open in a separate date-range detail page.
 
-## Local Setup
-
-- Put the project in an Apache/PHP web root, for example `htdocs/visitor`.
-- Import `database/init.sql` into MySQL.
-- Update database credentials in `config/config.php` if needed.
-- Open `http://localhost/visitor/views/public/kiosk.php`.
-
-Default admin:
+## Default Admin
 
 - Username: `admin`
 - Password: `admin123`
 
-## Third-Party Credits
+Change this before real use.
 
-- Bulma via jsDelivr CDN
-- Iconify
-- SweetAlert2
-- QRTag QR image endpoint
-- Google Fonts: Poppins, Open Sans, Quantico, Chakra Petch
+## Setup
 
-Bundled illustrative PNG icons are placeholder/demo assets.
+- Import `database/init.sql`.
+- Confirm database settings in `config/config.php`.
+- Open `views/public/kiosk.php` or `views/admin/log-masuk.php` through Apache.
 
-## License
-
-CC BY-NC-SA 4.0. See `LICENSE`.
-
-## Screenshots
-
-![Kiosk registration](screenshots/01-kiosk-registration.png)
-
-![Location QR URL](screenshots/02-location-qr-url.png)
-
-![Location scan registration](screenshots/03-location-scan-register.png)
-
-![Digital card](screenshots/04-digital-card.png)
-
-![Admin interface](screenshots/05-admin-interface.png)

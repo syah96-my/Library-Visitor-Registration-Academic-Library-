@@ -1,9 +1,9 @@
 <?php
 
-session_start();
 header('Content-Type: text/html');
 include_once '../../config/config.php';
 include_once '../../sessions/session.php';
+include_once '../../controllers/FormFieldController.php';
 
 if (!isLoggedIn()) {
     header('Location: ' . $base_url . '/views/admin/log-masuk.php');
@@ -35,6 +35,10 @@ function readUsers() {
     }
 }
 
+function readAdminFormFields() {
+    return getFormFields(false);
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -50,10 +54,9 @@ function readUsers() {
     <!-- Iconify Icons -->
     <script src="https://code.iconify.design/2/2.1.2/iconify.min.js"></script>
     <style>
-        /* Dark theme base */
         body {
-            background-color: #121212; /* Very dark gray / almost black */
-            color: #e0e0e0; /* Light gray text */
+            background-color: #121212;
+            color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -64,7 +67,7 @@ function readUsers() {
         }
         .container {
             width: 400px;
-            background-color: #1e1e1e; /* Darker container */
+            background-color: #1e1e1e;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
@@ -74,7 +77,7 @@ function readUsers() {
         .tab-content {
             margin-top: 20px;
             padding: 15px;
-            background: #2c2c2c; /* Slightly lighter than container */
+            background: #2c2c2c;
             border-radius: 5px;
             color: #e0e0e0;
         }
@@ -86,7 +89,7 @@ function readUsers() {
             color: #ccc;
         }
         .tabs .is-active a {
-            color: #3273dc; /* Bulma blue highlight */
+            color: #3273dc;
             font-weight: bold;
             border-bottom: 2px solid #3273dc;
         }
@@ -135,35 +138,60 @@ function readUsers() {
         table tbody tr:hover {
             background-color: #555;
         }
-        table td, table th {
+        table td,
+        table th {
             border: 1px solid #555;
             padding: 8px 10px;
         }
-        /* Color square */
         td span {
             font-size: 1.5rem;
         }
-        /* Smaller margin for buttons in table */
         table .button {
             margin-right: 4px;
         }
-        
-.input, .select {
-  max-width: 300px;
-}
-.stat-head {
-/* Center text vertically */
-   background-color: #00ffff !important;
-        /* Add some padding for spacing */
-
-}
-.stat-head th {
-  text-align: center !important;   /* Center text horizontally */
-  vertical-align: middle !important;   /* Center text vertically */
-
-  padding: 10px;            /* Add some padding for spacing */
-
-}
+        .input,
+        .select {
+            max-width: 300px;
+        }
+        .stat-head {
+            background-color: #00ffff !important;
+        }
+        .stat-head th {
+            text-align: center !important;
+            vertical-align: middle !important;
+            padding: 10px;
+        }
+        .admin-card,
+        .table-card {
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            padding: 0;
+            overflow-x: visible;
+        }
+        .management-grid,
+        .stats-grid {
+            display: block;
+        }
+        .field-row {
+            display: block;
+        }
+        .logout-link {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        @media (max-width: 720px) {
+          .container {
+            width: 100%;
+          }
+        }
     </style>
 </head>
 <body>
@@ -172,53 +200,123 @@ function readUsers() {
         <ul>
             <li id="statisticTab" class="is-active"><a onclick="showTab('Statistic')">Statistic</a></li>
             <li id="locationTab"><a onclick="showTab('Location')">Location</a></li>
+            <li id="fieldsTab"><a onclick="showTab('Fields')">Fields</a></li>
             <li id="profileTab"><a onclick="showTab('Profile')">Profile</a></li>
         </ul>
     </nav>
 
     <div id="Statistic" class="tab-content">
-            <h2 class="title">Statistics</h2>
-    <div class="mb-3">
-        <label for="yearSelect">Select Year:</label>
-        <select id="yearSelect">
-            <?php for ($y = date('Y'); $y >= 2020; $y--): ?>
-                <option value="<?php echo $y; ?>"><?php echo $y; ?></option>
-            <?php endfor; ?>
-        </select>
+        <h2 class="title">Statistics</h2>
+        <div class="field">
+            <label class="label">From Date</label>
+            <input id="startDate" class="input" type="date" value="<?php echo date('Y-m-01'); ?>">
+        </div>
+        <div class="field">
+            <label class="label">To Date</label>
+            <input id="endDate" class="input" type="date" value="<?php echo date('Y-m-d'); ?>">
+        </div>
+        <div class="field">
+            <div class="control">
+                <button onclick="openReport()" class="button is-success">Open Report</button>
+            </div>
+        </div>
     </div>
 
-    <table class="table is-fullwidth is-striped is-hoverable">
-        <thead class="stat-head">
-            <tr>
-                <th>Month</th>
-                <th>Location</th>
-                <th>Adult</th>
-                <th>Child</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody id="statisticsTableBody">
-            <!-- Data will be loaded here dynamically -->
-        </tbody>
-    </table>
+    <div id="Fields" class="tab-content is-hidden">
+        <h2 class="title">Visitor Fields</h2>
+        <div class="management-grid">
+            <section class="admin-card">
+                <input type="hidden" id="editingFieldId" value="">
+                <div class="field">
+                    <label class="label">Label</label>
+                    <input id="fieldLabel" class="input" type="text" placeholder="Field Label">
+                </div>
+                <div class="field">
+                    <label class="label">Type</label>
+                    <div class="select is-fullwidth">
+                        <select id="fieldType">
+                            <option value="text">Text</option>
+                            <option value="select">Select</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Sort Order</label>
+                    <input id="fieldSortOrder" class="input" type="number" value="100" placeholder="Sort Order">
+                </div>
+                <div class="field">
+                    <label class="label">Options</label>
+                    <textarea id="fieldOptions" class="textarea" rows="4" placeholder="Options, one per line. Only used for Select fields."></textarea>
+                </div>
+                <div class="field-actions">
+                    <label class="checkbox"><input id="fieldRequired" type="checkbox" checked> Required</label>
+                    <label class="checkbox"><input id="fieldActive" type="checkbox" checked> Active</label>
+                    <button id="submitFieldBtn" onclick="submitField()" class="button is-success">Add Field</button>
+                    <button id="cancelFieldEditBtn" onclick="cancelFieldEdit()" class="button is-warning is-hidden">Cancel Edit</button>
+                </div>
+            </section>
+
+        <section class="admin-card table-card">
+            <table class="table is-fullwidth is-striped is-hoverable">
+            <thead class="stat-head">
+                <tr>
+                    <th>Label</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Active</th>
+                    <th>Order</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="fieldsTableBody">
+                <?php foreach (readAdminFormFields() as $field): ?>
+                <tr data-field-id="<?php echo $field['field_id']; ?>">
+                    <td><?php echo htmlspecialchars($field['label']); ?></td>
+                    <td><?php echo htmlspecialchars($field['field_type']); ?></td>
+                    <td><?php echo (int) $field['required'] === 1 ? 'Yes' : 'No'; ?></td>
+                    <td><?php echo (int) $field['active'] === 1 ? 'Yes' : 'No'; ?></td>
+                    <td><?php echo (int) $field['sort_order']; ?></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="button is-small is-info" onclick="editField(<?php echo (int) $field['field_id']; ?>, <?php echo htmlspecialchars(json_encode($field['label']), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode($field['field_type']), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode($field['options'] ?? ''), ENT_QUOTES); ?>, <?php echo (int) $field['required']; ?>, <?php echo (int) $field['active']; ?>, <?php echo (int) $field['sort_order']; ?>)">Edit</button>
+                            <?php if ((int) $field['is_system'] === 0): ?>
+                                <button class="button is-small is-danger" onclick="deleteField(<?php echo (int) $field['field_id']; ?>)">Delete</button>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+            </table>
+        </section>
+        </div>
     </div>
 
     <div id="Location" class="tab-content is-hidden">
         <h2 class="title">Locations</h2>
-<input type="hidden" id="editingLocationId" value="">
+        <div class="management-grid">
+            <section class="admin-card">
+                <input type="hidden" id="editingLocationId" value="">
+                <div class="field">
+                    <label class="label">Location Name</label>
+                    <input id="newLocationName" class="input" type="text" placeholder="Location Name">
+                </div>
+                <div class="field">
+                    <label class="label">Color</label>
+                    <input id="newLocationColor" class="input" type="color" value="#000000">
+                </div>
+                <div class="field">
+                    <label class="label">Description</label>
+                    <textarea id="newLocationDescription" class="textarea" rows="4" placeholder="Location Description"></textarea>
+                </div>
+                <div class="field-actions">
+                    <button id="submitLocationBtn" onclick="submitLocation()" class="button is-success">Add Location</button>
+                    <button id="cancelLocationEditBtn" onclick="cancelEdit()" class="button is-warning is-hidden">Cancel Edit</button>
+                </div>
+            </section>
 
-<input id="newLocationName" class="input mb-2" type="text" placeholder="Location Name">
-<textarea id="newLocationDescription" class="textarea mb-2" rows="4" placeholder="Location Description"></textarea>
-<input id="newLocationColor" class="input mb-2" type="color" value="#000000">
-
-<button id="submitLocationBtn" onclick="submitLocation()" class="button is-success mb-2">Add Location</button>
-<button id="cancelEditBtn" onclick="cancelEdit()" class="button is-warning mb-2 is-hidden">Cancel Edit</button>
-
-        
-        
-        
-
-        <table class="table is-fullwidth is-striped is-hoverable">
+        <section class="admin-card table-card">
+            <table class="table is-fullwidth is-striped is-hoverable">
             <thead class="stat-head">
                 <tr>
                     <th>Name</th>
@@ -236,47 +334,51 @@ function readUsers() {
                         <span style="color: <?php echo htmlspecialchars($location['color']); ?>;">■</span>
                     </td>
                     <td>
-                        <button
-    class="button is-small is-info"
-    onclick="editLocation(
-        <?php echo $location['location_id']; ?>,
-        '<?php echo addslashes(htmlspecialchars($location['name'])); ?>',
-        '<?php echo addslashes(htmlspecialchars($location['description'])); ?>',
-        '<?php echo $location['color']; ?>'
-    )"
->
-    Edit
-</button>
-
-                        <button class="button is-small is-danger" onclick="deleteLocation(<?php echo $location['location_id']; ?>)">Delete</button>
-                        <button class="button is-small" onclick="viewLocation(<?php echo $location['location_id']; ?>)">View</button>
+                        <div class="table-actions">
+                            <button class="button is-small is-info" onclick="editLocation(<?php echo (int) $location['location_id']; ?>, <?php echo htmlspecialchars(json_encode($location['name']), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode($location['description']), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode($location['color']), ENT_QUOTES); ?>)">Edit</button>
+                            <button class="button is-small is-danger" onclick="deleteLocation(<?php echo $location['location_id']; ?>)">Delete</button>
+                            <button class="button is-small" onclick="viewLocation(<?php echo $location['location_id']; ?>)">View</button>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
-        </table>
+            </table>
+        </section>
+        </div>
     </div>
 
 
     <div id="Profile" class="tab-content is-hidden">
     <h2 class="title">User Management</h2>
-    
-    <input type="hidden" id="editingUserId" value="">
+    <div class="management-grid">
+        <section class="admin-card">
+            <input type="hidden" id="editingUserId" value="">
+            <div class="field">
+                <label class="label">Username</label>
+                <input id="newUsername" class="input" type="text" placeholder="Username" />
+            </div>
+            <div class="field">
+                <label class="label">Password</label>
+                <input id="newPassword" class="input" type="password" placeholder="Password" />
+            </div>
+            <div class="field">
+                <label class="label">Role</label>
+                <div class="select is-fullwidth">
+                    <select id="newRole">
+                        <option value="admin">Admin</option>
+                        <option value="superadmin">Super Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field-actions">
+                <button id="submitUserBtn" onclick="submitUser()" class="button is-success">Add User</button>
+                <button id="cancelUserEditBtn" onclick="cancelEditUser()" class="button is-warning is-hidden">Cancel Edit</button>
+            </div>
+        </section>
 
-    <input id="newUsername" class="input mb-2" type="text" placeholder="Username" />
-    <input id="newPassword" class="input mb-2" type="password" placeholder="Password" />
-    
-    <div class="select mb-2">
-        <select id="newRole">
-            <option value="admin">Admin</option>
-            <option value="superadmin">Super Admin</option>
-        </select>
-    </div>
-    
-    <button id="submitUserBtn" onclick="submitUser()" class="button is-success mb-2">Add User</button>
-    <button id="cancelEditBtn" onclick="cancelEditUser()" class="button is-warning mb-2 is-hidden">Cancel Edit</button>
-
-    <table class="table is-fullwidth is-striped is-hoverable">
+    <section class="admin-card table-card">
+        <table class="table is-fullwidth is-striped is-hoverable">
         <thead class="stat-head">
             <tr>
                 <th>Username</th>
@@ -292,46 +394,140 @@ function readUsers() {
         <td>••••••••</td> <!-- never show actual password -->
         <td><?php echo htmlspecialchars($user['role']); ?></td>
         <td>
-            <button
-                class="button is-small is-info"
-                onclick="editUser(
-                    <?php echo $user['account_id']; ?>,
-                    '<?php echo addslashes(htmlspecialchars($user['username'])); ?>',
-                    '<?php echo $user['role']; ?>'
-                )"
-            >
-                Edit
-            </button>
-
-            <button class="button is-small is-danger" onclick="deleteUser(<?php echo $user['account_id']; ?>)">Delete</button>
+            <div class="table-actions">
+                <button class="button is-small is-info" onclick="editUser(<?php echo (int) $user['account_id']; ?>, <?php echo htmlspecialchars(json_encode($user['username']), ENT_QUOTES); ?>, <?php echo htmlspecialchars(json_encode($user['role']), ENT_QUOTES); ?>)">Edit</button>
+                <button class="button is-small is-danger" onclick="deleteUser(<?php echo $user['account_id']; ?>)">Delete</button>
+            </div>
         </td>
     </tr>
     <?php endforeach; ?>
 </tbody>
-    </table>
-</div>
-<a href="../../logout.php" style="
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #f44336;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-">Log Out</a>
-
+        </table>
+    </section>
+    </div>
+<a href="../../logout.php" class="logout-link">Log Out</a>
 </div>
 
 <script>
 function showTab(tabName) {
-    const tabs = ['Statistic', 'Location', 'Profile'];
+    const tabs = ['Statistic', 'Location', 'Fields', 'Profile'];
     tabs.forEach((tab) => {
         document.getElementById(tab).classList.add('is-hidden');
         document.getElementById(tab.toLowerCase() + 'Tab').classList.remove('is-active');
     });
     document.getElementById(tabName).classList.remove('is-hidden');
     document.getElementById(tabName.toLowerCase() + 'Tab').classList.add('is-active');
+}
+
+function createFieldRow(field) {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-field-id', field.field_id);
+    const canDelete = Number(field.is_system) === 0;
+    tr.innerHTML = `
+        <td>${escapeHtml(String(field.label || ''))}</td>
+        <td>${escapeHtml(String(field.field_type || 'text'))}</td>
+        <td>${Number(field.required) === 1 ? 'Yes' : 'No'}</td>
+        <td>${Number(field.active) === 1 ? 'Yes' : 'No'}</td>
+        <td>${Number(field.sort_order || 0)}</td>
+        <td>
+            <div class="table-actions">
+                <button class="button is-small is-info" onclick="editField(${Number(field.field_id)}, '${escapeJs(String(field.label || ''))}', '${escapeJs(String(field.field_type || 'text'))}', '${escapeJs(String(field.options || ''))}', ${Number(field.required)}, ${Number(field.active)}, ${Number(field.sort_order || 0)})">Edit</button>
+                ${canDelete ? `<button class="button is-small is-danger" onclick="deleteField(${Number(field.field_id)})">Delete</button>` : ''}
+            </div>
+        </td>
+    `;
+    return tr;
+}
+
+function updateFieldTable(fields) {
+    const tbody = document.getElementById('fieldsTableBody');
+    tbody.innerHTML = '';
+    fields.forEach(field => tbody.appendChild(createFieldRow(field)));
+}
+
+async function submitField() {
+    const id = document.getElementById('editingFieldId').value;
+    const label = document.getElementById('fieldLabel').value.trim();
+    const fieldType = document.getElementById('fieldType').value;
+    const options = document.getElementById('fieldOptions').value;
+    const sortOrder = document.getElementById('fieldSortOrder').value;
+    const required = document.getElementById('fieldRequired').checked ? 1 : 0;
+    const active = document.getElementById('fieldActive').checked ? 1 : 0;
+
+    if (!label) {
+        alert('Field label is required.');
+        return;
+    }
+
+    const csrfToken = await getCsrfToken();
+    if (!csrfToken) return;
+
+    const payload = {
+        action: id ? 'edit' : 'add',
+        label,
+        field_type: fieldType,
+        options,
+        sort_order: sortOrder,
+        required,
+        active,
+        csrf_token: csrfToken
+    };
+    if (id) payload.id = id;
+
+    const response = await fetch('../../controllers/form_field_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    alert(result.message || (result.status === 'success' ? 'Saved' : 'Error'));
+
+    if (result.status === 'success') {
+        updateFieldTable(result.fields || []);
+        cancelFieldEdit();
+    }
+}
+
+function editField(id, label, fieldType, options, required, active, sortOrder) {
+    document.getElementById('editingFieldId').value = id;
+    document.getElementById('fieldLabel').value = label;
+    document.getElementById('fieldType').value = fieldType;
+    document.getElementById('fieldOptions').value = options;
+    document.getElementById('fieldSortOrder').value = sortOrder;
+    document.getElementById('fieldRequired').checked = Number(required) === 1;
+    document.getElementById('fieldActive').checked = Number(active) === 1;
+    document.getElementById('submitFieldBtn').textContent = 'Update Field';
+    document.getElementById('cancelFieldEditBtn').classList.remove('is-hidden');
+}
+
+function cancelFieldEdit() {
+    document.getElementById('editingFieldId').value = '';
+    document.getElementById('fieldLabel').value = '';
+    document.getElementById('fieldType').value = 'text';
+    document.getElementById('fieldOptions').value = '';
+    document.getElementById('fieldSortOrder').value = '100';
+    document.getElementById('fieldRequired').checked = true;
+    document.getElementById('fieldActive').checked = true;
+    document.getElementById('submitFieldBtn').textContent = 'Add Field';
+    document.getElementById('cancelFieldEditBtn').classList.add('is-hidden');
+}
+
+async function deleteField(id) {
+    if (!confirm('Delete this custom field? Existing visit history will remain in statistics.')) return;
+
+    const csrfToken = await getCsrfToken();
+    if (!csrfToken) return;
+
+    const response = await fetch('../../controllers/form_field_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id, csrf_token: csrfToken })
+    });
+    const result = await response.json();
+    alert(result.message || 'Done');
+    if (result.status === 'success') {
+        updateFieldTable(result.fields || []);
+    }
 }
 
 // Called on Add or Update button click
@@ -381,7 +577,7 @@ function editLocation(id, name, description, color) {
     document.getElementById('editingLocationId').value = id;
 
     document.getElementById('submitLocationBtn').textContent = 'Update Location';
-    document.getElementById('cancelEditBtn').classList.remove('is-hidden');
+    document.getElementById('cancelLocationEditBtn').classList.remove('is-hidden');
 
     document.getElementById('newLocationName').scrollIntoView({ behavior: 'smooth' });
 }
@@ -394,7 +590,7 @@ function cancelEdit() {
     document.getElementById('newLocationColor').value = '#000000';
 
     document.getElementById('submitLocationBtn').textContent = 'Add Location';
-    document.getElementById('cancelEditBtn').classList.add('is-hidden');
+    document.getElementById('cancelLocationEditBtn').classList.add('is-hidden');
 }
 
 // Helper: convert rgb(a) color string to hex (#rrggbb)
@@ -512,7 +708,7 @@ function escapeHtml(text) {
 }
 
 function escapeJs(text) {
-    return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n');
 }
 
 // Submit user (add/update)
@@ -617,7 +813,7 @@ function editUser(id, username, role) {
     submitBtn.textContent = 'Update User';
 
     // Show the cancel edit button
-    document.getElementById('cancelEditBtn').classList.remove('is-hidden');
+    document.getElementById('cancelUserEditBtn').classList.remove('is-hidden');
 }
 
 function cancelEditUser() {
@@ -634,69 +830,29 @@ function cancelEditUser() {
     submitBtn.textContent = 'Add User';
 
     // Hide the cancel edit button
-    document.getElementById('cancelEditBtn').classList.add('is-hidden');
+    document.getElementById('cancelUserEditBtn').classList.add('is-hidden');
 }
 
-async function loadStatistics(year) {
-    try {
-        // Get the CSRF token
-        const csrfToken = await getCsrfToken();
-        if (!csrfToken) return;
+function openReport() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
 
-        // Fetch the statistics with the CSRF token in headers
-        const response = await fetch(`../../controllers/visitor_api.php?year=${year}&csrf_token=${csrfToken}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error(`Failed to fetch statistics: ${response.statusText}`);
-
-        // Attempt to parse JSON response
-        let result;
-        try {
-            result = await response.json();
-        } catch {
-            throw new Error('Invalid JSON response from server.');
-        }
-
-        if (result.status !== 'success') throw new Error(result.message);
-
-        const data = result.data;
-        const tableBody = document.getElementById('statisticsTableBody');
-        tableBody.innerHTML = '';
-
-        // Populate the statistics table
-        data.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.month}</td>
-                <td>${row.location_name}</td>
-                <td>${row.total_adult}</td>
-                <td>${row.total_child}</td>
-                <td>${row.total}</td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error('Error loading statistics:', error);
-        alert('Error loading statistics: ' + error.message);
+    if (!startDate || !endDate) {
+        alert('Please select both dates.');
+        return;
     }
-}
 
-// Load statistics for the current year on page load
-document.addEventListener('DOMContentLoaded', () => {
-    const currentYear = new Date().getFullYear();
-    loadStatistics(currentYear);
+    if (startDate > endDate) {
+        alert('From Date must be before To Date.');
+        return;
+    }
 
-    // Event listener for year change
-    const yearSelect = document.getElementById('yearSelect');
-    yearSelect.addEventListener('change', () => {
-        const selectedYear = yearSelect.value;
-        loadStatistics(selectedYear);
+    const params = new URLSearchParams({
+        start_date: startDate,
+        end_date: endDate
     });
-});
+    window.open('report.php?' + params.toString(), '_blank');
+}
 
 function viewLocation(id) {
   const encodedId = btoa(id); // encode id to base64

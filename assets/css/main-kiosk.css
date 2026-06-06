@@ -136,17 +136,6 @@ body {
         width: 320px;
     }
     
-    /* Grouping the fields side by side */
-.field-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px; /* Space between the fields */
-}
-
-.field.adult, .field.child {
-    flex: 1; /* Equal width */
-}
-
 .field label {
     margin-bottom: 0.5rem; /* Spacing for labels */
 }

@@ -3,6 +3,7 @@ session_start();
 include_once '../../config/config.php';
 include_once '../../controllers/CookieRetrieve.php';
 include_once '../../controllers/ColorController.php';
+include_once '../../controllers/FormFieldController.php';
 
 // Main logic to use the functions
 $userData = getUserInfo();
@@ -17,13 +18,15 @@ $visit = getVisits($userData['visitor_id']);
 
 if (!empty($visit)) {
     // Extract visit details from the associative array
-    $purpose = htmlspecialchars(strtoupper($visit['purpose']));
     $location_id = $visit['location_id'];
     $location_name = htmlspecialchars($visit['location_name']);
-    $adult = $visit['adult'];
-    $child = $visit['child'];
+    $faculty = htmlspecialchars(strtoupper($visit['faculty'] ?? ''));
+    $semester = htmlspecialchars(strtoupper($visit['semester'] ?? ''));
+    $customFields = json_decode($visit['custom_fields'] ?? '{}', true);
+    if (!is_array($customFields)) {
+        $customFields = [];
+    }
     $check_in = $visit['check_in'];
-    $img_pur = $visit['purpose'];
 
     // Split the date and time
     list($date, $time) = explode(' ', $check_in);
@@ -40,14 +43,11 @@ if (!empty($visit)) {
 }
 
 $location_color=getColor($location_id);
-$avatars = [
-    'Pengguna' => 'read',
-    'Lawatan' => 'tourists',
-    'Kontraktor' => 'builder',
-    'Urusan Rasmi' => 'businessman'
-];
-
-$avatar = $avatars[$img_pur] ?? 'default';
+$avatar = 'read';
+$fieldLabels = [];
+foreach (getFormFields(true) as $field) {
+    $fieldLabels[$field['field_key']] = $field['label'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,16 +68,21 @@ $avatar = $avatars[$img_pur] ?? 'default';
     </div>
     <div class="avatar" style="background: linear-gradient(to bottom, <?php echo $location_color; ?> 50%, white 50%);">
         <img src="../../assets/images/<?php echo $avatar; ?>.png" alt="Avatar">
-        <h3><?php echo htmlspecialchars(strtoupper($purpose)) ;?></h3>
+        <h3>VISITOR</h3>
     </div>
     <div class="infos">
         <p>Nama: <?php echo htmlspecialchars(strtoupper($userName)) ;?></p>
+        <?php echo $faculty !== '' ? "<p>Faculty: $faculty</p>" : ''; ?>
+        <?php echo $semester !== '' ? "<p>Semester: $semester</p>" : ''; ?>
         <p>Lokasi: <?php echo htmlspecialchars(strtoupper($location_name)) ;?></p>
         <p>Tarikh: <?php echo (new DateTime($date))->format('d/m/Y'); ?></p>
         <p>Masa: <?php echo htmlspecialchars($time) ;?></p>
         <?php
-        echo $adult != 0 ? "<p>Dewasa: $adult</p>" : '';
-        echo $child != 0 ? "<p>Kanak-kanak: $child</p>" : '';
+        foreach ($customFields as $key => $value) {
+            $label = htmlspecialchars($fieldLabels[$key] ?? ucwords(str_replace('_', ' ', $key)));
+            $safeValue = htmlspecialchars(strtoupper((string) $value));
+            echo $safeValue !== '' ? "<p>$label: $safeValue</p>" : '';
+        }
         ?>
     </div>
     <div class="credit" style="background-color:<?php echo $location_color; ?>">

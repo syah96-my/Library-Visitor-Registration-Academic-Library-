@@ -29,6 +29,36 @@ function getUserInfo() {
     }
 }
 
+function getUserProfile($visitor_id) {
+    global $pdo;
+
+    if (!$visitor_id) return [];
+
+    try {
+        $stmtUser = $pdo->prepare("SELECT name, faculty, semester, custom_fields FROM users WHERE visitor_id = :visitor_id LIMIT 1");
+        $stmtUser->execute(['visitor_id' => $visitor_id]);
+        $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return [];
+        }
+
+        $custom = json_decode($user['custom_fields'] ?? '{}', true);
+        if (!is_array($custom)) {
+            $custom = [];
+        }
+
+        return array_merge([
+            'name' => $user['name'] ?? '',
+            'faculty' => $user['faculty'] ?? '',
+            'semester' => $user['semester'] ?? '',
+        ], $custom);
+    } catch (PDOException $e) {
+        error_log('Error fetching user profile: ' . $e->getMessage());
+        return [];
+    }
+}
+
 // Get visit data based on the visitor ID
 function getVisits($visitor_id) {
     global $pdo;
@@ -38,7 +68,7 @@ function getVisits($visitor_id) {
     try {
         // Prepare query to get the latest visit of today from the visits table
         $stmtVisits = $pdo->prepare("
-            SELECT location_id, purpose, location_name, adult, child, check_in 
+            SELECT location_id, faculty, semester, custom_fields, location_name, visit_count, check_in 
             FROM visits 
             WHERE visitor_id = :visitor_id 
               AND DATE(check_in) = CURDATE() 
@@ -64,7 +94,7 @@ function getUserDetail($visitor_id) {
     try {
         // Prepare query to get the latest visit regardless of the date
         $stmtVisits = $pdo->prepare("
-            SELECT location_id, purpose, location_name, adult, child, check_in 
+            SELECT location_id, faculty, semester, custom_fields, location_name, visit_count, check_in 
             FROM visits 
             WHERE visitor_id = :visitor_id 
             ORDER BY check_in DESC 

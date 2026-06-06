@@ -1,7 +1,7 @@
 <?php
-session_start();
 include_once '../config/config.php';
 include_once '../config/minda.php';
+include_once '../sessions/session.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: ' . $base_url);
 
@@ -81,14 +81,15 @@ if (!validateCsrfToken($csrfToken)) {
 
 try {
     if ($action === 'add') {
-          $username = $data['username'] ?? '';
+          $username = trim((string) ($data['username'] ?? ''));
         if ($username === '' || empty($data['password'])) {
             echo json_encode(['status' => 'error', 'message' => 'Username and password are required']);
             exit;
         }
 
         $password = password_hash($data['password'], PASSWORD_BCRYPT);
-        $role = $data['role'] ?? 'user';
+        $requestedRole = $data['role'] ?? 'admin';
+        $role = in_array($requestedRole, ['admin', 'superadmin'], true) ? $requestedRole : 'admin';
     
         $stmt = $pdo->prepare('INSERT INTO accounts (username, password, role) VALUES (?, ?, ?)');
         $stmt->execute([$username, $password, $role]);
@@ -105,9 +106,15 @@ try {
             ]
         ]);
     } elseif ($action === 'update') {
-        $id = $data['id'] ?? 0;
-        $username = $data['username'] ?? '';
-        $role = $data['role'] ?? 'user';
+        $id = (int) ($data['id'] ?? 0);
+        $username = trim((string) ($data['username'] ?? ''));
+        $requestedRole = $data['role'] ?? 'admin';
+        $role = in_array($requestedRole, ['admin', 'superadmin'], true) ? $requestedRole : 'admin';
+
+        if ($id <= 0 || $username === '') {
+            echo json_encode(['status' => 'error', 'message' => 'ID and username are required']);
+            exit;
+        }
     
         if (!empty($data['password'])) {
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
@@ -120,7 +127,11 @@ try {
     
         echo json_encode(['status' => 'success', 'message' => 'User updated']);
     } elseif ($action === 'delete') {
-        $id = $data['id'] ?? 0;
+        $id = (int) ($data['id'] ?? 0);
+        if ($id <= 0 || (isset($_SESSION['user_id']) && (int) $_SESSION['user_id'] === $id)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid user delete request']);
+            exit;
+        }
 
         $stmt = $pdo->prepare('DELETE FROM accounts WHERE account_id=?');
         $stmt->execute([$id]);

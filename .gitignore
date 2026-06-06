@@ -1,21 +1,22 @@
-# OS/editor files
 .DS_Store
 Thumbs.db
-desktop.ini
-.idea/
-.vscode/
-
-# Runtime/local artifacts
 *.log
 *.tmp
 *.bak
 *.swp
 
-# Dependency folders if added later
-node_modules/
-vendor/
+# Local/editor files
+.vscode/
+.idea/
 
-# Local environment overrides
+# Environment/local secrets
 .env
-.env.*
 config/local.php
+
+# Runtime/cache uploads if added later
+cache/
+tmp/
+uploads/
+
+# Local screenshots
+screenshots/

@@ -1,36 +1,66 @@
-# Simple Visitor Registration
+# Visitor Detail Registration
 
-A lightweight PHP/MySQL visitor registration and movement tracking web app. Visitors register once, receive a reusable digital card, and can scan location QR links as they move between locations.
+A lightweight PHP/MySQL visitor registration and reporting app for a local XAMPP-style deployment.
 
 ## Features
 
-- Kiosk registration form for first-time visitors.
-- Location QR links for tracking visitor movement.
-- Same-day scans record movement between locations without repeating full registration.
-- Next-day scans prompt whether the visitor came alone.
-- Digital visitor card retrieval using random card tokens.
-- Basic admin panel for locations, users, and statistics.
-- Localhost/folder-aware URL generation for easier reuse.
+- Kiosk registration form.
+- Location QR links for visitor movement tracking.
+- Visitor digital card retrieval by reusable card token.
+- One device/check-in counts as one visit.
+- Configurable visitor fields from the admin panel.
+- Default fields: `Nama`, `Faculty`, and `Semester`.
+- Admin report page with date range selection, summary counts, custom field counts, and detailed rows.
+- Basic admin management for locations, fields, users, and reports.
 
-## Main Flow
+## Screenshots
 
-- First-time visitor scans a location QR and completes the registration form.
-- The app stores the visitor profile and today's first visit.
-- If the same visitor scans another location on the same day, the app records the new location and shows the updated digital card.
-- If the visitor returns on another day, the app asks whether they came alone.
-- If they came alone, the app records a new visit for that day automatically.
-- If they came with others, the app opens a short form to capture adult and child counts.
+### Visitor Card
+
+![Visitor card](screenshoot/1.%20visitor%20card.png)
+
+### Custom Field Settings
+
+![Custom field settings](screenshoot/2.%20setting%20field.png)
+
+### Registration Form
+
+![Registration form](screenshoot/3.%20registration%20form.png)
+
+### Statistic Report
+
+![Statistic report](screenshoot/4.%20statistic.png)
 
 ## Local Setup
 
-1. Place the project in an Apache/PHP web root, for example `htdocs/visitor`.
-2. Import `database/init.sql` into MySQL.
-3. If this is an existing install, also run `database/security_migration.sql`.
-4. Update database credentials in `config/config.php` if needed.
-5. Open the kiosk page:
+1. Place the project in your web root, for example:
 
 ```text
-http://localhost/visitor/views/public/kiosk.php
+c:\xampp-8.0\htdocs\visitor - detail
+```
+
+2. Import the database:
+
+```text
+database/init.sql
+```
+
+3. Check database credentials in:
+
+```text
+config/config.php
+```
+
+4. Open the kiosk:
+
+```text
+http://localhost/visitor%20-%20detail/views/public/kiosk.php
+```
+
+5. Open admin:
+
+```text
+http://localhost/visitor%20-%20detail/views/admin/log-masuk.php
 ```
 
 Default admin:
@@ -40,58 +70,31 @@ Username: admin
 Password: admin123
 ```
 
-Change the default admin password immediately after first login.
+Change the default admin password before any real use.
 
 ## Useful URLs
 
 ```text
-Kiosk registration:
-http://localhost/visitor/views/public/kiosk.php
+Admin:
+http://localhost/visitor%20-%20detail/views/admin/log-masuk.php
 
-Admin login:
-http://localhost/visitor/views/admin/log-masuk.php
+Kiosk:
+http://localhost/visitor%20-%20detail/views/public/kiosk.php
 ```
 
-Location QR URLs are generated from the admin location page.
+Location QR URLs are generated from the admin Location tab.
 
 ## Security Notes
 
-This revived legacy app includes basic hardening:
-
 - Admin APIs require login and CSRF tokens.
-- Visitor card links use random tokens instead of guessable numeric IDs.
-- Visitor cookies use `HttpOnly`, `SameSite=Lax`, and `Secure` when HTTPS is active.
-- Admin login regenerates the session ID.
-- Raw database errors are not returned to users.
+- Admin login uses a CSRF token.
+- Session cookies are configured with `HttpOnly` and `SameSite=Lax`.
+- Public visitor IDs are stored in cookies; use HTTPS in production.
+- Default credentials are for local setup only.
+- Review database credentials before publishing or deployment.
 
-Before deploying publicly, review server configuration, HTTPS, database credentials, and operational logging.
+## Third-Party Services
 
-## Third-Party Credits
-
-This project uses the following third-party resources:
-
-- [Bulma](https://bulma.io/) via jsDelivr CDN for CSS layout/components.
-- [Iconify](https://iconify.design/) for icon rendering.
-- [SweetAlert2](https://sweetalert2.github.io/) for the returning-visitor prompt.
-- [QRTag](https://qrtag.net/) QR image endpoint for generated visitor card QR codes.
-- [Google Fonts](https://fonts.google.com/) for Poppins, Open Sans, Quantico, and Chakra Petch.
-
-Bundled illustrative PNG icons in `assets/images/` are placeholder/demo assets. Replace them with assets you have rights to use before deploying in a branded environment.
-
-## License
-
-This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
-
-See [LICENSE](LICENSE) for details.
-
-## Screenshots
-
-![Kiosk registration](screenshots/01-kiosk-registration.png)
-
-![Location QR URL](screenshots/02-location-qr-url.png)
-
-![Location scan registration](screenshots/03-location-scan-register.png)
-
-![Digital card](screenshots/04-digital-card.png)
-
-![Admin interface](screenshots/05-admin-interface.png)
+- Bulma CSS CDN.
+- Iconify CDN.
+- QRTag QR image endpoint for card QR display.

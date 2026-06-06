@@ -4,11 +4,22 @@ include_once '../../config/config.php';
 include_once '../../controllers/AuthController.php';
 include_once '../../sessions/session.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+$loginError = '';
+if (empty($_SESSION['login_csrf'])) {
+    $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
+}
 
-    login($username, $password);  // Login function from AuthController
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $postedToken = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['login_csrf'], $postedToken)) {
+        $loginError = 'Invalid request. Please try again.';
+    } else {
+        $username = trim((string) ($_POST['username'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+        if (!login($username, $password)) {
+            $loginError = 'Invalid username or password.';
+        }
+    }
 }
 ?>
 
@@ -82,7 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
   <div class="container">
     <h1 class="title has-text-white has-text-centered">Login</h1>
+    <?php if ($loginError !== ''): ?>
+      <div class="notification is-danger is-light"><?php echo htmlspecialchars($loginError); ?></div>
+    <?php endif; ?>
     <form method="POST" action="">
+      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['login_csrf']); ?>" />
       <div class="field">
         <label class="label has-text-light">Username</label>
         <div class="control">

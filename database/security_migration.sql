@@ -1,4 +1,4 @@
-USE `visitor`;
+USE `visitor_detail`;
 
 ALTER TABLE `users`
   ADD COLUMN IF NOT EXISTS `card_token` VARCHAR(64) DEFAULT NULL;
