@@ -1,7 +1,6 @@
 # Visitor Detail Registration
 
-A lightweight PHP/MySQL visitor registration and reporting app for a local XAMPP-style deployment.
-
+A lightweight PHP/MySQL visitor registration and reporting app.
 ## Features
 
 - Kiosk registration form.
@@ -35,10 +34,6 @@ A lightweight PHP/MySQL visitor registration and reporting app for a local XAMPP
 
 1. Place the project in your web root, for example:
 
-```text
-c:\xampp-8.0\htdocs\visitor - detail
-```
-
 2. Import the database:
 
 ```text
@@ -54,13 +49,13 @@ config/config.php
 4. Open the kiosk:
 
 ```text
-http://localhost/visitor%20-%20detail/views/public/kiosk.php
+views/public/kiosk.php
 ```
 
 5. Open admin:
 
 ```text
-http://localhost/visitor%20-%20detail/views/admin/log-masuk.php
+views/admin/log-masuk.php
 ```
 
 Default admin:
@@ -76,10 +71,10 @@ Change the default admin password before any real use.
 
 ```text
 Admin:
-http://localhost/visitor%20-%20detail/views/admin/log-masuk.php
+views/admin/log-masuk.php
 
 Kiosk:
-http://localhost/visitor%20-%20detail/views/public/kiosk.php
+views/public/kiosk.php
 ```
 
 Location QR URLs are generated from the admin Location tab.
