@@ -32,3 +32,5 @@ Default admin:
 ![Location scan registration](screenshots/03-location-scan-register.png)
 
 ![Digital card](screenshots/04-digital-card.png)
+
+![Admin interface](screenshots/05-admin-interface.png)
